@@ -100,62 +100,51 @@ def do_if_form(expressions, env):
     elif len(expressions) == 3:
         return scheme_eval(expressions.rest.rest.first, env)
 
-def do_and_form(expressions, env):
-    """Evaluate a (short-circuited) and form.
 
-    >>> env = create_global_frame()
-    >>> do_and_form(read_line("(#f (print 1))"), env) # evaluating (and #f (print 1))
-    False
-    >>> # evaluating (and (print 1) (print 2) (print 4) 3 #f)
-    >>> do_and_form(read_line("((print 1) (print 2) (print 3) (print 4) 3 #f)"), env)
-    1
-    2
-    3
-    4
-    False
-    """
-    # BEGIN PROBLEM 12
-    "*** YOUR CODE HERE ***"
-    # END PROBLEM 12
+def do_and_form(expressions, env):
+    # base case and
+    if expressions is nil:
+        return True
+    front_sche = scheme_eval(expressions.first, env)
+    if is_scheme_true(front_sche):
+        if expressions.rest is nil:
+            return front_sche
+        else:
+            return do_and_form(expressions.rest, env)
+    else:
+        return front_sche
 
 def do_or_form(expressions, env):
-    """Evaluate a (short-circuited) or form.
+    # base case or
+    if expressions is nil:
+        return False
+    front_sche = scheme_eval(expressions.first, env)
+    if is_scheme_false(front_sche):
+        if expressions.rest is nil:
+            return front_sche
+        else:
+            return do_or_form(expressions.rest, env)
+    else:
+        return front_sche
 
-    >>> env = create_global_frame()
-    >>> do_or_form(read_line("(10 (print 1))"), env) # evaluating (or 10 (print 1))
-    10
-    >>> do_or_form(read_line("(#f 2 3 #t #f)"), env) # evaluating (or #f 2 3 #t #f)
-    2
-    >>> # evaluating (or (begin (print 1) #f) (begin (print 2) #f) 6 (begin (print 3) 7))
-    >>> do_or_form(read_line("((begin (print 1) #f) (begin (print 2) #f) 6 (begin (print 3) 7))"), env)
-    1
-    2
-    6
-    """
-    # BEGIN PROBLEM 12
-    "*** YOUR CODE HERE ***"
-    # END PROBLEM 12
 
 def do_cond_form(expressions, env):
-    """Evaluate a cond form.
-
-    >>> do_cond_form(read_line("((#f (print 2)) (#t 3))"), create_global_frame())
-    3
-    """
+    """Evaluate a cond form."""
     while expressions is not nil:
         clause = expressions.first
-        validate_form(clause, 1)
-        if clause.first == 'else':
-            test = True
-            if expressions.rest != nil:
-                raise SchemeError('else must be last')
-        else:
-            test = scheme_eval(clause.first, env)
-        if is_scheme_true(test):
-            # BEGIN PROBLEM 13
-            "*** YOUR CODE HERE ***"
-            # END PROBLEM 13
+        validate_form(clause, min=1)
+        predicate = clause.first
+        if predicate == 'else':
+            if clause.rest is nil:
+                return True
+            return eval_all(clause.rest, env)
+        result = scheme_eval(predicate, env)
+        if is_scheme_true(result):
+            if clause.rest is nil:
+                return result
+            return eval_all(clause.rest, env)
         expressions = expressions.rest
+    return None
 
 def do_let_form(expressions, env):
     """Evaluate a let form.
@@ -169,17 +158,21 @@ def do_let_form(expressions, env):
     return eval_all(expressions.rest, let_env)
 
 def make_let_frame(bindings, env):
-    """Create a child frame of Frame ENV that contains the definitions given in
-    BINDINGS. The Scheme list BINDINGS must have the form of a proper bindings
-    list in a let expression: each item must be a list containing a symbol
-    and a Scheme expression."""
-    if not scheme_listp(bindings):
-        raise SchemeError('bad bindings list in let form')
-    names = vals = nil
-    # BEGIN PROBLEM 14
-    "*** YOUR CODE HERE ***"
-    # END PROBLEM 14
-    return env.make_child_frame(names, vals)
+    """Create a child frame of env that binds symbols to values."""
+    symbols = nil
+    values = nil
+    
+    while bindings is not nil:
+        binding = bindings.first
+        validate_form(binding, 2, 2)
+        symbol = binding.first
+        expression = binding.rest.first
+        symbols = Pair(symbol, symbols)
+        values = Pair(scheme_eval(expression, env), values)
+        bindings = bindings.rest
+    
+    validate_formals(symbols)
+    return env.make_child_frame(symbols, values)
 
 
 
