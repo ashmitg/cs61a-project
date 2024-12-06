@@ -32,12 +32,14 @@ def scheme_eval(expr, env, _=None): # Optional third argument is ignored
     if scheme_symbolp(first) and first in scheme_forms.SPECIAL_FORMS:
         return scheme_forms.SPECIAL_FORMS[first](rest, env)
     else:
-        # BEGIN PROBLEM 3
-        operator = scheme_eval(first, env) #evaluate the operator
+        # Evaluate the operator(first argument)
+        operator = scheme_eval(first, env)
+        validate_procedure(operator)
+        # Evaluate all of the operands(other arguments)
+        from functools import partial
+        operands = rest.map(partial(scheme_eval, env=env))
 
-        operands = rest.map(lambda operand: scheme_eval(operand, env)) #evaluate operands
-
-        return scheme_apply(operator, operands, env) #apply procedure
+        return scheme_apply(operator, operands, env)
         # END PROBLEM 3
 
 def scheme_apply(procedure, args, env):
@@ -48,17 +50,23 @@ def scheme_apply(procedure, args, env):
        assert False, "Not a Frame: {}".format(env)
     if isinstance(procedure, BuiltinProcedure):
         # BEGIN PROBLEM 2
-        py_args = [] #convert list into Python list
-        while args is not nil:
-            py_args.append(args.first)
-            args = args.rest
-
-        if procedure.need_env: #if procedure needs environment, append to list
-            py_args.append(env)
+        args_list = []
+        pos = args
+        while pos is not nil:
+            if pos.first is not nil:
+                args_list.append(pos.first)
+            else:
+                args_list.append(nil)
+            pos = pos.rest
+        # Add the current environment if procedure.expect_env == True
+        if procedure.expect_env:
+            args_list.append(env)
         # END PROBLEM 2
         try:
             # BEGIN PROBLEM 2
-            return procedure.py_func(*py_args) #call procedure's function
+            return procedure.py_func(*args_list)
+        except TypeError as e:
+            raise SchemeError(f"incorrect number of arguments, {e}")
             # END PROBLEM 2
         except TypeError as err:
             raise SchemeError('incorrect number of arguments: {0}'.format(procedure))

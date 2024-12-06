@@ -32,12 +32,15 @@ class Frame:
     def lookup(self, symbol):
         """Return the value bound to SYMBOL. Errors if SYMBOL is not found."""
         # BEGIN PROBLEM 1
-        if symbol in self.bindings:
-            return self.bindings[symbol] #found in current
-        elif self.parent is not None:
-            return self.parent.lookup(symbol) #Recursive search
+        if symbol in self.bindings.keys():
+            return self.bindings[symbol]
         else:
-            raise SchemeError(f"Symbol '{symbol}' not found") #not found in current
+        # Case 2. we check the parent of the current frame repreatly
+            pos = self.parent
+            while pos is not None:
+                if symbol in pos.bindings.keys():
+                    return pos.bindings[symbol]
+                pos = pos.parent
         # END PROBLEM 1
         raise SchemeError('unknown identifier: {0}'.format(symbol))
 
