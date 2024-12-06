@@ -56,7 +56,13 @@ class Frame:
         if len(formals) != len(vals):
             raise SchemeError('Incorrect number of arguments to function call')
         # BEGIN PROBLEM 8
-        "*** YOUR CODE HERE ***"
+        sub_frame = Frame(self)
+        pos1, pos2 = formals, vals
+        while pos1 is not nil:
+            key, value = pos1.first, pos2.first
+            sub_frame.define(key, value)
+            pos1, pos2 = pos1.rest, pos2.rest
+        return sub_frame
         # END PROBLEM 8
 
 ##############
