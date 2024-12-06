@@ -79,16 +79,14 @@ def scheme_apply(procedure, args, env):
         # BEGIN PROBLEM 11
         child_frame = env.make_child_frame(procedure.formals, args)
         return eval_all(procedure.body, child_frame)
-    ...
-
-    def do_mu_form(expressions, env):
-        validate_form(expressions, 2)
-        formals = expressions.first
-        validate_formals(formals)
-        return MuProcedure(formals, expressions.rest)
         # END PROBLEM 11
     else:
         assert False, "Unexpected procedure: {}".format(procedure)
+def do_mu_form(expressions, env):
+    validate_form(expressions, 2)
+    formals = expressions.first
+    validate_formals(formals)
+    return MuProcedure(formals, expressions.rest)
 
 def eval_all(expressions, env):
     """Evaluate each expression in the Scheme list EXPRESSIONS in
